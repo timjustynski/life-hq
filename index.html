@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Tim's Life HQ</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #f6f5f2; color: #1c1c1c; font-size: 15px; min-height: 100vh; }
+.screen { min-height: 100vh; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; background: #f6f5f2; }
+.setup-card { background: white; border-radius: 16px; border: 0.5px solid rgba(0,0,0,0.1); padding: 28px 24px; width: 100%; max-width: 360px; }
+.setup-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; letter-spacing: -0.3px; }
+.setup-sub { font-size: 13px; color: #999; margin-bottom: 24px; line-height: 1.5; }
+.field-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #bbb; margin-bottom: 6px; margin-top: 16px; }
+.field-label:first-of-type { margin-top: 0; }
+.setup-input { width: 100%; border: 0.5px solid rgba(0,0,0,0.15); border-radius: 10px; padding: 11px 12px; font-size: 15px; background: #fafafa; color: #1c1c1c; outline: none; font-family: inherit; }
+.setup-input:focus { border-color: rgba(0,0,0,0.35); background: white; }
+.connect-btn { width: 100%; margin-top: 20px; background: #1c1c1c; color: white; border: none; border-radius: 10px; padding: 13px; font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; }
+.connect-btn:active { opacity: 0.8; }
+.connect-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.setup-note { font-size: 11px; color: #ccc; text-align: center; margin-top: 14px; line-height: 1.6; }
+.loading-text { font-size: 14px; color: #aaa; }
+#app { display: none; padding: 16px 14px 60px; }
+.header { margin-bottom: 20px; }
+.header-top { display: flex; align-items: center; justify-content: space-between; }
+.header-title { font-size: 22px; font-weight: 600; letter-spacing: -0.4px; }
+.settings-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #ddd; padding: 4px; line-height: 1; }
+.settings-btn:active { color: #888; }
+.header-sub { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+.header-date { font-size: 12px; color: #999; }
+.sync-st { font-size: 11px; color: #ddd; }
+.sync-st.syncing { color: #854F0B; }
+.sync-st.synced { color: #0F6E56; }
+.sync-st.error { color: #dc2626; }
+.slabel { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #ccc; margin-bottom: 8px; margin-top: 22px; }
+.week-strip { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+@media (min-width: 560px) { .week-strip { grid-template-columns: repeat(3, 1fr); } }
+.week-chip { background: white; border: 0.5px solid rgba(0,0,0,0.1); border-radius: 10px; padding: 10px 11px; }
+.week-chip-area { display: flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.week-chip input { width: 100%; border: none; outline: none; background: transparent; font-size: 12px; color: #1c1c1c; font-family: inherit; line-height: 1.4; padding: 0; }
+.week-chip input::placeholder { color: #ccc; }
+.cards-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+@media (min-width: 560px) { .cards-grid { grid-template-columns: repeat(2, 1fr); } }
+.card { background: white; border: 0.5px solid rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; }
+.card-head { padding: 12px 13px 10px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 0.5px solid rgba(0,0,0,0.07); }
+.card-head-left { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.card-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.card-title { font-size: 13px; font-weight: 600; }
+.card-sub { font-size: 11px; color: #aaa; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; }
+.task-count { font-size: 11px; color: #aaa; background: #f5f5f5; border-radius: 20px; padding: 2px 8px; white-space: nowrap; flex-shrink: 0; margin-left: 6px; }
+.card-body { padding: 6px 12px 10px; }
+.task-row { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 0.5px solid rgba(0,0,0,0.05); min-height: 36px; }
+.task-row:last-child { border-bottom: none; }
+.task-cb { margin-top: 2px; flex-shrink: 0; width: 18px; height: 18px; cursor: pointer; accent-color: #1c1c1c; }
+.task-text { font-size: 13px; color: #1c1c1c; cursor: pointer; flex: 1; line-height: 1.45; padding-top: 1px; }
+.task-text.done { text-decoration: line-through; color: #ccc; }
+.task-del { font-size: 16px; color: #e8e8e8; cursor: pointer; padding: 0 2px; margin-left: 2px; flex-shrink: 0; line-height: 1.45; margin-top: 1px; }
+.task-del:active { color: #f87171; }
+.add-row { display: flex; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 0.5px solid rgba(0,0,0,0.06); }
+.add-row input { flex: 1; border: 0.5px solid rgba(0,0,0,0.12); border-radius: 8px; padding: 9px 10px; font-size: 13px; background: #fafafa; color: #1c1c1c; outline: none; font-family: inherit; min-height: 38px; }
+.add-row input:focus { border-color: rgba(0,0,0,0.3); }
+.add-btn { background: #1c1c1c; color: white; border: none; border-radius: 8px; width: 38px; height: 38px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.add-btn:active { opacity: 0.7; }
+.clear-row { margin-top: 6px; text-align: right; }
+.clear-btn { background: none; border: none; font-size: 11px; color: #ddd; cursor: pointer; font-family: inherit; padding: 4px 0; }
+.clear-btn:active { color: #999; }
+.dump-card { background: white; border: 0.5px solid rgba(0,0,0,0.1); border-radius: 12px; padding: 12px 14px; }
+.dump-row { display: flex; gap: 8px; }
+.dump-row input { flex: 1; border: 0.5px solid rgba(0,0,0,0.12); border-radius: 8px; padding: 9px 10px; font-size: 14px; background: #fafafa; color: #1c1c1c; outline: none; font-family: inherit; min-height: 42px; }
+.dump-row input:focus { border-color: rgba(0,0,0,0.3); }
+.dump-row button { background: #1c1c1c; color: white; border: none; border-radius: 8px; padding: 9px 16px; font-size: 13px; cursor: pointer; font-family: inherit; min-height: 42px; flex-shrink: 0; }
+.dump-row button:active { opacity: 0.7; }
+.dump-list { margin-top: 0; }
+.dump-item { padding: 8px 0; border-bottom: 0.5px solid rgba(0,0,0,0.06); }
+.dump-item:last-child { border-bottom: none; }
+.dump-item-text { font-size: 13px; color: #333; margin-bottom: 6px; }
+.dump-actions { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+.dump-assign { font-size: 11px; border: 0.5px solid; border-radius: 5px; padding: 4px 8px; cursor: pointer; background: transparent; font-family: inherit; font-weight: 600; min-height: 28px; }
+.dump-assign:active { opacity: 0.6; }
+.dump-dismiss { font-size: 12px; color: #ddd; cursor: pointer; padding: 4px 6px; margin-left: auto; min-height: 28px; display: flex; align-items: center; }
+.dump-dismiss:active { color: #f87171; }
+.rhythm-card { background: white; border: 0.5px solid rgba(0,0,0,0.1); border-radius: 12px; padding: 12px 14px; }
+.rhythm-row { display: flex; gap: 14px; padding: 8px 0; border-bottom: 0.5px solid rgba(0,0,0,0.06); font-size: 13px; }
+.rhythm-row:last-child { border-bottom: none; }
+.rtime { color: #999; font-weight: 600; font-size: 11px; min-width: 90px; flex-shrink: 0; padding-top: 1px; }
+.rdesc { color: #1c1c1c; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div class="screen" id="setup-screen" style="display:flex">
+  <div class="setup-card">
+    <div class="setup-title">Tim's Life HQ</div>
+    <div class="setup-sub">Connect your GitHub account to sync your dashboard across all your devices.</div>
+    <div class="field-label">GitHub username</div>
+    <input class="setup-input" id="s-user" type="text" placeholder="yourusername" autocapitalize="none" autocorrect="off" spellcheck="false">
+    <div class="field-label">Repository name</div>
+    <input class="setup-input" id="s-repo" type="text" value="life-hq" autocapitalize="none" autocorrect="off" spellcheck="false">
+    <div class="field-label">Personal access token</div>
+    <input class="setup-input" id="s-token" type="password" placeholder="ghp_••••••••••••••••" autocapitalize="none" autocorrect="off" autocomplete="off" spellcheck="false">
+    <button class="connect-btn" id="connect-btn" onclick="doConnect()">Connect to GitHub</button>
+    <div class="setup-note">Your token is saved only on this device.<br>You will enter it once per device — never again.</div>
+  </div>
+</div>
+
+<div class="screen" id="loading-screen">
+  <div class="loading-text">Loading your dashboard…</div>
+</div>
+
+<div id="app">
+  <div class="header">
+    <div class="header-top">
+      <div class="header-title">Tim's Life HQ</div>
+      <button class="settings-btn" onclick="showSetup()" title="Settings">⚙</button>
+    </div>
+    <div class="header-sub">
+      <span class="header-date" id="datestr"></span>
+      <span class="sync-st" id="sync-st">—</span>
+    </div>
+  </div>
+  <div class="slabel">This week's focus</div>
+  <div class="week-strip" id="week-strip"></div>
+  <div class="slabel">Life areas</div>
+  <div class="cards-grid" id="cards-grid"></div>
+  <div class="slabel">Brain dump</div>
+  <div class="dump-card">
+    <div class="dump-row">
+      <input type="text" id="dump-input" placeholder="Something on your mind? Capture it here...">
+      <button onclick="addDump()">Save</button>
+    </div>
+    <div class="dump-list" id="dump-list"></div>
+  </div>
+  <div class="slabel">The weekly ritual</div>
+  <div class="rhythm-card">
+    <div class="rhythm-row"><span class="rtime">Sunday eve</span><span class="rdesc">15 min: open this, pick 1 focus per area for the week. Done.</span></div>
+    <div class="rhythm-row"><span class="rtime">Weeknights</span><span class="rdesc">Pick ONE area. Work 60-90 min. Do not switch. One thing forward beats zero things finished.</span></div>
+    <div class="rhythm-row"><span class="rtime">Saturday</span><span class="rdesc">Bigger blocks: boat, home, Grit & Glitter. Protect at least 2 hrs.</span></div>
+    <div class="rhythm-row"><span class="rtime">Sunday</span><span class="rdesc">Wife/relationship day. Guard it. Review and reset in the evening.</span></div>
+    <div class="rhythm-row"><span class="rtime">The rule</span><span class="rdesc">1 win per area per week = a great week. You do not need to do everything.</span></div>
+  </div>
+</div>
+
+<script>
+var AM=[
+  {id:'business',name:'Grit & Glitter',sub:'gritandglittercustoms.com',color:'#0F6E56',bg:'#E1F5EE',icon:'*'},
+  {id:'boat',name:'Boat & Jetski',sub:'Season prep',color:'#185FA5',bg:'#E6F1FB',icon:'~'},
+  {id:'home',name:'Home Projects',sub:'The deferred list',color:'#854F0B',bg:'#FAEEDA',icon:'#'},
+  {id:'wife',name:'Wife & Us',sub:'Protect this time',color:'#7C2D6B',bg:'#FBEAF0',icon:'+'},
+  {id:'self',name:'Personal & Self',sub:'Fill your cup first',color:'#534AB7',bg:'#EEEDFE',icon:'o'},
+  {id:'kgs',name:'KGS Day Job',sub:'Contained to work hours',color:'#5F5E5A',bg:'#F1EFE8',icon:'-'}
+];
+var DF={
+  business:"Decide: what are the 3 products I'm selling first?",
+  boat:'Deep clean the boat this weekend',
+  home:'Walk every room — write down everything that needs doing',
+  wife:'Plan one intentional thing just for her',
+  self:'Sleep 7+ hrs and move your body once',
+  kgs:'Log off at a consistent time — let it be done'
+};
+var DT={
+  business:['List all equipment and materials on hand','Pick 3 hero products to lead with','Review and update gritandglittercustoms.com','Set a 90-day revenue goal','Test both lasers — make sure they are dialed in','Decide: what woodworking items to add first?'],
+  boat:['Deep clean boat (interior + exterior)','Deep clean jetski','Check engine, fluids, and battery','Check registration / renewal status','Schedule first outing of the season'],
+  home:['Full home walkthrough: write every project down','Sort list: quick win / big project / someday','Pick first quick win and put it on the calendar'],
+  wife:['Plan one intentional date or activity this week','Phone-free dinners this week','Ask her: what have you been wanting to do?'],
+  self:['Get 7+ hours sleep consistently','20 min of movement daily (walk, ride, anything)','Identify what recharges you — put it on the calendar'],
+  kgs:['Keep work within work hours','Log off at a set time each day']
+};
+
+function buildDefault(){
+  return {areas:AM.map(function(m){return {id:m.id,focus:DF[m.id],tasks:DT[m.id].map(function(t,i){return {id:m.id+'_'+i,text:t,done:false};})};}),dumps:[],counter:500};
+}
+
+var CFG_KEY='lifehq_cfg_v1';
+var cfg=null,state=null,sha=null,syncTimer=null;
+
+function loadCfg(){try{var r=localStorage.getItem(CFG_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
+function saveCfg(c){try{localStorage.setItem(CFG_KEY,JSON.stringify(c));}catch(e){}}
+
+function b64enc(str){
+  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,function(_,p){return String.fromCharCode(parseInt(p,16));}));
+}
+function b64dec(str){
+  return decodeURIComponent(Array.prototype.map.call(atob(str.replace(/\s/g,'')),function(c){return '%'+c.charCodeAt(0).toString(16).padStart(2,'0');}).join(''));
+}
+
+function ghHeaders(){return {'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json'};}
+
+function loadData(){
+  return fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/tasks.json',{headers:ghHeaders()})
+    .then(function(res){
+      if(res.status===404){sha=null;return buildDefault();}
+      if(!res.ok){throw new Error('GitHub returned '+res.status+'. Check your username, repo name, and token.');}
+      return res.json().then(function(d){sha=d.sha;return JSON.parse(b64dec(d.content));});
+    });
+}
+function saveData(){
+  var body={message:'Update life tasks',content:b64enc(JSON.stringify(state))};
+  if(sha)body.sha=sha;
+  return fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/tasks.json',{
+    method:'PUT',headers:Object.assign({},ghHeaders(),{'Content-Type':'application/json'}),body:JSON.stringify(body)
+  }).then(function(res){
+    if(!res.ok)throw new Error('Save failed: '+res.status);
+    return res.json().then(function(d){sha=d.content.sha;});
+  });
+}
+
+function setSync(s,msg){
+  var el=document.getElementById('sync-st');
+  el.className='sync-st '+s;
+  el.textContent=s==='synced'?'Synced':s==='syncing'?'Syncing...':s==='error'?(msg||'Sync error'):'—';
+}
+function persist(){
+  clearTimeout(syncTimer);
+  setSync('syncing');
+  syncTimer=setTimeout(function(){
+    saveData().then(function(){setSync('synced');setTimeout(function(){setSync('idle');},3000);})
+    .catch(function(e){setSync('error');});
+  },1500);
+}
+
+function doConnect(){
+  var btn=document.getElementById('connect-btn');
+  var u=document.getElementById('s-user').value.trim();
+  var r=document.getElementById('s-repo').value.trim();
+  var t=document.getElementById('s-token').value.trim();
+  if(!u||!r||!t){alert('Please fill in all three fields.');return;}
+  cfg={user:u,repo:r,token:t};
+  btn.disabled=true;btn.textContent='Connecting...';
+  loadData().then(function(s){state=s;saveCfg(cfg);showApp();})
+  .catch(function(e){btn.disabled=false;btn.textContent='Connect to GitHub';alert('Connection failed:\n\n'+e.message+'\n\nDouble-check your username, repo name, and token.');});
+}
+
+function showSetup(){
+  document.getElementById('app').style.display='none';
+  document.getElementById('setup-screen').style.display='flex';
+  if(cfg){document.getElementById('s-user').value=cfg.user||'';document.getElementById('s-repo').value=cfg.repo||'life-hq';document.getElementById('s-token').value=cfg.token||'';}
+  var btn=document.getElementById('connect-btn');btn.disabled=false;btn.textContent='Connect to GitHub';
+}
+function showApp(){
+  document.getElementById('setup-screen').style.display='none';
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  renderDate();renderWeekStrip();renderCards();renderDumps();setSync('idle');
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function getA(id){return state.areas.find(function(a){return a.id===id;});}
+
+function renderDate(){
+  var d=new Date(),days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('datestr').textContent=days[d.getDay()]+', '+months[d.getMonth()]+' '+d.getDate();
+}
+
+function renderWeekStrip(){
+  document.getElementById('week-strip').innerHTML=AM.map(function(m){
+    var a=getA(m.id);
+    return '<div class="week-chip"><div class="week-chip-area"><span class="dot" style="background:'+m.color+'"></span><span style="color:'+m.color+'">'+m.name+'</span></div><input value="'+esc(a.focus)+'" placeholder="Set focus..." onchange="updFocus(\''+m.id+'\',this.value)" onblur="updFocus(\''+m.id+'\',this.value)"></div>';
+  }).join('');
+}
+function updFocus(id,val){getA(id).focus=val;persist();}
+
+function renderCards(){
+  document.getElementById('cards-grid').innerHTML=AM.map(function(m){
+    var a=getA(m.id),done=a.tasks.filter(function(t){return t.done;}).length,allDone=done===a.tasks.length&&a.tasks.length>0;
+    return '<div class="card"><div class="card-head"><div class="card-head-left"><div class="card-icon" style="background:'+m.bg+';color:'+m.color+'">'+m.icon+'</div><div style="min-width:0"><div class="card-title">'+m.name+'</div><div class="card-sub">'+m.sub+'</div></div></div><span class="task-count" style="'+(allDone?'color:#0F6E56;background:#E1F5EE':'')+'">'+done+'/'+a.tasks.length+'</span></div><div class="card-body">'+
+      a.tasks.map(function(t){return '<div class="task-row"><input class="task-cb" type="checkbox"'+(t.done?' checked':'')+' onchange="togTask(\''+m.id+'\',\''+t.id+'\',this.checked)"><span class="task-text'+(t.done?' done':'')+'" onclick="togTask(\''+m.id+'\',\''+t.id+'\')">'+esc(t.text)+'</span><span class="task-del" onclick="delTask(\''+m.id+'\',\''+t.id+'\')">x</span></div>';}).join('')+
+      (a.tasks.some(function(t){return t.done;})?'<div class="clear-row"><button class="clear-btn" onclick="clearDone(\''+m.id+'\')">Clear completed</button></div>':'')+
+      '<div class="add-row"><input id="add-'+m.id+'" placeholder="Add a task..." onkeydown="if(event.key===\'Enter\'){addTask(\''+m.id+'\');event.preventDefault()}"><button class="add-btn" onclick="addTask(\''+m.id+'\')">+</button></div></div></div>';
+  }).join('');
+}
+
+function togTask(aId,tId,val){var a=getA(aId),t=a.tasks.find(function(x){return x.id===tId;});t.done=val!==undefined?val:!t.done;renderCards();persist();}
+function delTask(aId,tId){getA(aId).tasks=getA(aId).tasks.filter(function(t){return t.id!==tId;});renderCards();persist();}
+function clearDone(aId){getA(aId).tasks=getA(aId).tasks.filter(function(t){return !t.done;});renderCards();persist();}
+function addTask(aId){var inp=document.getElementById('add-'+aId),txt=inp.value.trim();if(!txt)return;getA(aId).tasks.push({id:aId+'_'+(state.counter++),text:txt,done:false});inp.value='';renderCards();persist();}
+function addDump(){var inp=document.getElementById('dump-input'),txt=inp.value.trim();if(!txt)return;state.dumps.push({id:'dump_'+(state.counter++),text:txt});inp.value='';renderDumps();persist();}
+function assignDump(dId,aId){var item=state.dumps.find(function(d){return d.id===dId;});if(!item)return;getA(aId).tasks.push({id:aId+'_'+(state.counter++),text:item.text,done:false});state.dumps=state.dumps.filter(function(d){return d.id!==dId;});renderDumps();renderCards();persist();}
+function dismissDump(dId){state.dumps=state.dumps.filter(function(d){return d.id!==dId;});renderDumps();persist();}
+function renderDumps(){
+  var list=document.getElementById('dump-list');
+  if(!state.dumps.length){list.innerHTML='';return;}
+  list.style.marginTop='10px';
+  list.innerHTML=state.dumps.map(function(d){
+    return '<div class="dump-item"><div class="dump-item-text">'+esc(d.text)+'</div><div class="dump-actions">'+AM.map(function(m){return '<button class="dump-assign" onclick="assignDump(\''+d.id+'\',\''+m.id+'\')" style="color:'+m.color+';border-color:'+m.color+'44">'+m.name.split(' ')[0]+'</button>';}).join('')+'<span class="dump-dismiss" onclick="dismissDump(\''+d.id+'\')">x</span></div></div>';
+  }).join('');
+}
+
+document.getElementById('dump-input').addEventListener('keydown',function(e){if(e.key==='Enter'){addDump();e.preventDefault();}});
+
+cfg=loadCfg();
+if(cfg){
+  document.getElementById('setup-screen').style.display='none';
+  document.getElementById('loading-screen').style.display='flex';
+  loadData().then(function(s){state=s;showApp();}).catch(function(e){alert('Could not load: '+e.message);cfg=null;showSetup();});
+} else {
+  document.getElementById('setup-screen').style.display='flex';
+}
+</script>
+</body>
+</html>
